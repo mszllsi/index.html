@@ -2,8 +2,17 @@
 <html lang="hu">
 <head>
   <meta charset="UTF-8" />
-  <title>Születésnapi kirándulás</title>
+  <title>Meghívó</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script>
+    (function(){
+      emailjs.init("oqwFlauFpkQ_GQZAd");
+    })();
+  </script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -25,10 +34,6 @@
       width: 90%;
     }
 
-    h1 {
-      margin-bottom: 10px;
-    }
-
     .places button {
       display: block;
       width: 100%;
@@ -40,7 +45,6 @@
       color: white;
       font-size: 16px;
       cursor: pointer;
-      transition: 0.2s;
     }
 
     .places button:hover {
@@ -50,91 +54,120 @@
     #result {
       margin-top: 20px;
       font-weight: bold;
-      color: #333;
+    }
+
+    #resultImage {
+      display: none;
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 10px;
+    }
+
+    #countdown {
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #555;
     }
   </style>
 </head>
+
 <body>
   <div class="card">
-    <h1>💌 Születésnapi after</h1>
-	<div id="countdown"></div>
-    <p>Válaszd ki, hol szeretnél kikapcsolódni:</p>
+    <h1>💌 Meghívás egy pénteki kalandra</h1>
+
+    <div id="countdown"></div>
+
+    <p>Válaszd ki, hova szeretnél kirándulni:</p>
 
     <div class="places">
       <button onclick="selectPlace('Szilvásvárad')">Szilvásvárad</button>
       <button onclick="selectPlace('Sátoraljaújhely')">Sátoraljaújhely</button>
       <button onclick="selectPlace('Aggtelek')">Aggtelek</button>
       <button onclick="selectPlace('Boldogkőváralja')">Boldogkőváralja</button>
-	  <button onclick="selectPlace('Eger')">Eger</button>
-	  <button onclick="selectPlace('Tokaj')">Tokaj</button>
-
-
+      <button onclick="selectPlace('Eger')">Eger</button>
+      <button onclick="selectPlace('Tokaj')">Tokaj</button>
     </div>
 
-  <div id="result"></div>
-	<img
-		id="resultImage"
-		src="dori.jpg" alt="dori.jpg"
-		style="display:none; max-width:100%; margin-top:15px; border-radius:10px;">
+    <div id="result"></div>
+
+    <img id="resultImage" src="dori.jpg" alt="Dóri">
   </div>
+
 <script>
-    function getNextFriday9AM() {
-      const now = new Date();
-      const result = new Date(now);
-      const day = now.getDay();
-      const diff = (5 - day + 7) % 7; // 5 = péntek
-      result.setDate(now.getDate() + diff);
-      result.setHours(9, 0, 0, 0);
+/* ======================
+   VISSZASZÁMLÁLÓ
+====================== */
+function getNextFriday9AM() {
+  const now = new Date();
+  const result = new Date(now);
+  const day = now.getDay();
+  const diff = (5 - day + 7) % 7; // 5 = péntek
+  result.setDate(now.getDate() + diff);
+  result.setHours(9, 0, 0, 0);
 
-      if (result < now) {
-        result.setDate(result.getDate() + 7);
-      }
+  if (result < now) {
+    result.setDate(result.getDate() + 7);
+  }
+  return result;
+}
 
-      return result;
-    }
+const targetDate = getNextFriday9AM();
 
-    const targetDate = getNextFriday9AM();
+function updateCountdown() {
+  const now = new Date().getTime();
+  const distance = targetDate.getTime() - now;
 
-    function updateCountdown() {
-      const now = new Date().getTime();
-      const distance = targetDate.getTime() - now;
+  if (distance <= 0) {
+    document.getElementById("countdown").innerText = "Indulás ideje! 🎒";
+    clearInterval(interval);
+    return;
+  }
 
-      if (distance <= 0) {
-        document.getElementById("countdown").innerText = "Indulás ideje! 🎒";
-        clearInterval(interval);
-        return;
-      }
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((distance / (1000 * 60)) % 60);
+  const seconds = Math.floor((distance / 1000) % 60);
 
-      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((distance / (1000 * 60)) % 60);
-      const seconds = Math.floor((distance / 1000) % 60);
+  document.getElementById("countdown").innerText =
+    `Indulásig hátra: ${days} nap ${hours} óra ${minutes} perc ${seconds} mp`;
+}
 
-      document.getElementById("countdown").innerText =
-        `Indulásig hátra: ${days} nap ${hours} óra ${minutes} perc ${seconds} mp`;
-    }
+const interval = setInterval(updateCountdown, 1000);
+updateCountdown();
 
-    const interval = setInterval(updateCountdown, 1000);
-    updateCountdown();
+/* ======================
+   HELYSZÍNVÁLASZTÁS
+====================== */
 
-    function selectPlace(place) {
-      document.getElementById('result').innerText = 
-        'Szuper választás! Pénteken ide megyünk: ' + place + '❤️';
-		document.getElementById('resultImage').style.display = 'block';
-      document.getElementById('gif').style.display = 'block';
+let hasSelected = false;
 
-      fetch("https://example.com/webhook", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          selectedPlace: place,
-          timestamp: new Date().toISOString()
-        })
-      }).catch(err => console.log(err));
-	  
-    }
-  </script>
+function selectPlace(place) {
+  if (hasSelected) {
+    document.getElementById('result').innerText =
+      'Héé, ne csalj! 😄 Már választottál ezen az oldalon.';
+    return;
+  }
+
+  hasSelected = true;
+
+  document.getElementById('result').innerText =
+    'Szuper választás! Pénteken ide megyünk: ' + place + ' ❤️';
+
+  document.getElementById('resultImage').style.display = 'block';
+
+  /* ======================
+     EMAIL KÜLDÉS
+  ====================== */
+  emailjs.send("service_502ze3m", "template_9qn0odf", {
+    selected_place: place
+  })
+  .then(function(response) {
+    console.log("Email elküldve!", response.status, response.text);
+  }, function(error) {
+    console.log("Email hiba:", error);
+  });
+}
+</script>
+
 </body>
 </html>
