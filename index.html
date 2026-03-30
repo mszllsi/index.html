@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <title>Születésnapi kirándulás</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #a8edea, #fed6e3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .places button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #ff7eb3;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .places button:hover {
+      background: #ff4f9a;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>💌 Születésnapi after</h1>
+	<div id="countdown"></div>
+    <p>Válaszd ki, hol szeretnél kikapcsolódni:</p>
+
+    <div class="places">
+      <button onclick="selectPlace('Szilvásvárad')">Szilvásvárad</button>
+      <button onclick="selectPlace('Sátoraljaújhely')">Sátoraljaújhely</button>
+      <button onclick="selectPlace('Aggtelek')">Aggtelek</button>
+      <button onclick="selectPlace('Boldogkőváralja')">Boldogkőváralja</button>
+	  <button onclick="selectPlace('Eger')">Eger</button>
+	  <button onclick="selectPlace('Tokaj')">Tokaj</button>
+
+
+    </div>
+
+  <div id="result"></div>
+	<img
+		id="resultImage"
+		src="dori.jpg" alt="dori.jpg"
+		style="display:none; max-width:100%; margin-top:15px; border-radius:10px;">
+  </div>
+<script>
+    function getNextFriday9AM() {
+      const now = new Date();
+      const result = new Date(now);
+      const day = now.getDay();
+      const diff = (5 - day + 7) % 7; // 5 = péntek
+      result.setDate(now.getDate() + diff);
+      result.setHours(9, 0, 0, 0);
+
+      if (result < now) {
+        result.setDate(result.getDate() + 7);
+      }
+
+      return result;
+    }
+
+    const targetDate = getNextFriday9AM();
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = targetDate.getTime() - now;
+
+      if (distance <= 0) {
+        document.getElementById("countdown").innerText = "Indulás ideje! 🎒";
+        clearInterval(interval);
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((distance / (1000 * 60)) % 60);
+      const seconds = Math.floor((distance / 1000) % 60);
+
+      document.getElementById("countdown").innerText =
+        `Indulásig hátra: ${days} nap ${hours} óra ${minutes} perc ${seconds} mp`;
+    }
+
+    const interval = setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    function selectPlace(place) {
+      document.getElementById('result').innerText = 
+        'Szuper választás! Pénteken ide megyünk: ' + place + '❤️';
+		document.getElementById('resultImage').style.display = 'block';
+      document.getElementById('gif').style.display = 'block';
+
+      fetch("https://example.com/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          selectedPlace: place,
+          timestamp: new Date().toISOString()
+        })
+      }).catch(err => console.log(err));
+	  
+    }
+  </script>
+</body>
+</html>
